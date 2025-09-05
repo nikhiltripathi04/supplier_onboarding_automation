@@ -6,15 +6,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const submitButton = form.querySelector('button');
 
     form.addEventListener('submit', async (event) => {
-        event.preventDefault(); // Prevent the default form submission
+        event.preventDefault();
 
         const supplierName = document.getElementById('supplierName').value;
         const gstin = document.getElementById('gstin').value;
         
-        // The API endpoint URL provided by Vercel
         const apiUrl = '/api/onboard';
 
-        // Provide user feedback
         submitButton.textContent = 'Processing...';
         submitButton.disabled = true;
         responseDiv.textContent = '';
@@ -29,26 +27,43 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify({ supplierName, gstin }),
             });
 
+            // --- DEBUGGING LINES ADDED ---
+            console.log('Received response from API:', response);
+            console.log('Response OK?:', response.ok);
+            console.log('Response Status:', response.status);
+            // --- END DEBUGGING LINES ---
+
             const result = await response.json();
 
-            if (response.ok) { // Check if the HTTP status is 2xx (e.g., 200 OK)
+            // --- MORE DEBUGGING ---
+            console.log('Parsed JSON result:', result);
+            // --- END DEBUGGING ---
+
+            if (response.ok) {
+                // --- SUCCESS ALERT ADDED ---
+                alert(`Success: ${result.message}`);
                 responseDiv.textContent = result.message;
                 responseDiv.className = 'success';
-                form.reset(); // Clear the form on success
+                form.reset();
             } else {
-                // The API returned an error (e.g., 400 for bad validation)
+                // --- FAILURE ALERT ADDED ---
+                alert(`Error: ${result.message}`);
                 responseDiv.textContent = `Error: ${result.message}`;
                 responseDiv.className = 'error';
             }
         } catch (error) {
-            // A network error occurred
-            responseDiv.textContent = 'A network error occurred. Please try again.';
+            // --- NETWORK ERROR ALERT ADDED ---
+            const errorMessage = 'A network error occurred. Please check the console.';
+            alert(errorMessage);
+            responseDiv.textContent = errorMessage;
             responseDiv.className = 'error';
+            // --- MORE DEBUGGING ---
             console.error('Submission Error:', error);
+            // --- END DEBUGGING ---
         } finally {
-            // Re-enable the button
             submitButton.textContent = 'Onboard Supplier';
             submitButton.disabled = false;
         }
     });
 });
+
