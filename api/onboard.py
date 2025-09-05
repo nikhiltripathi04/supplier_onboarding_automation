@@ -2,10 +2,25 @@
 
 from flask import Flask, request, jsonify
 import logging
-import requests # Import the requests library
+import requests 
+import os
 
 app = Flask(__name__)
 logger = logging.getLogger(__name__)
+
+def send_slack_notification(message: str):
+    """Sends a message to a Slack channel using a webhook."""
+    webhook_url = os.environ.get('SLACK_WEBHOOK_URL')
+    if not webhook_url:
+        logger.warning("SLACK_WEBHOOK_URL environment not set.")
+        return
+    
+    try: 
+        payload = {'text': message}
+        requests.post(webhook_url, json=payload)
+        logger.info("Successfully sent Slack notification.")
+    except Exception as e:
+        logger.error(f"Failed to send Slack notification: {e}")
 
 def validate_gstin_via_api(gstin: str) -> bool:
     """
@@ -41,7 +56,11 @@ def handle_onboarding():
             logger.warning(f"Validation FAILED for GSTIN: {gstin}")
             return jsonify({'message': f"Invalid GSTIN: {gstin}"}), 400
         
+        # --- New Slack Notification ---
         logger.info(f"Validation PASSED for GSTIN: {gstin}")
+        notification_message = f"New Supplier Ready for Approval:\nName: {supplier_name}\nGSTIN: {gstin}"
+        send_slack_notification(notification_message)
+
         response_message = f"Successfully validated supplier: {supplier_name}"
         
         return jsonify({'message': response_message}), 200
